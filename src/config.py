@@ -1,40 +1,52 @@
-from pydantic import BaseSettings
+from pydantic import BaseSettings, Field
 
 
 class Config(BaseSettings):
-    prepare_dataset: bool = False
+    prepare_dataset: bool
+    save_to_disk: bool
 
-    dataset_name: str = "mozilla-foundation/common_voice_13"
-    dataset_lang: str = "ka"
-    model_name: str = "GiorgiSekhniashvili/whisper-tiny-ka"
-    model_lang: str = "Georgian"
-    task: str = "transcribe"
-    output_model_name: str = "whisper-tiny-ka"
+    dataset_name: str
+    dataset_lang: str
+    model_name: str
+    model_lang: str
+    task: str
+    output_model_name: str
 
-    sampling_rate: int = 16_000
-    do_lower_case: bool = False
-    do_remove_punctuation: bool = False
+    # dataset arguments
+    sample_percentage: float
+
+    sampling_rate: int
+    do_lower_case: bool
+    do_remove_punctuation: bool
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+
+class TrainingArgumentsConfig(BaseSettings):
+    output_dir: str = Field(..., env="OUTPUT_MODEL_NAME")
 
     # training arguments
-    per_device_train_batch_size: int = 4
-    gradient_accumulation_steps: int = 4
-    learning_rate: float = 1e-5
-    warmup_steps: int = 1000
-    max_steps: int = 5000
-    gradient_checkpointing: bool = True
-    fp16: bool = True
-    evaluation_strategy: str = "steps"
-    per_device_eval_batch_size: int = 8
-    predict_with_generate: bool = True
-    generation_max_length: int = 256
-    save_steps: int = 1000
-    eval_steps: int = 1000
-    logging_steps: int = 25
-    report_to: list = ["tensorboard"]
-    load_best_model_at_end: bool = True
-    metric_for_best_model: str = "wer"
-    greater_is_better: bool = False
-    push_to_hub: bool = True
+    per_device_train_batch_size: int
+    per_device_eval_batch_size: int
+    gradient_accumulation_steps: int
+    learning_rate: float
+    warmup_steps: int
+    max_steps: int
+    fp16: bool
+    evaluation_strategy: str
+    predict_with_generate: bool
+    generation_max_length: int
+    weight_decay: float
+    save_steps: int
+    eval_steps: int
+    logging_steps: int
+    report_to: list
+    load_best_model_at_end: bool
+    metric_for_best_model: str
+    greater_is_better: bool
+    push_to_hub: bool
 
     class Config:
         env_file = ".env"

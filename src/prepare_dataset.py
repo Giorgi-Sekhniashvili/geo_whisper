@@ -1,12 +1,11 @@
 import logging
 from pathlib import Path
 
-from datasets import Audio, load_dataset
+from datasets import Audio, DatasetDict, load_dataset
 from transformers import WhisperProcessor
 from transformers.models.whisper.english_normalizer import BasicTextNormalizer
 
 from src.config import Config
-from datasets import DatasetDict
 
 
 def preprocess(
@@ -26,13 +25,10 @@ def preprocess(
         array_list, sampling_rate=sampling_rate
     ).input_features
 
-    logging.info(f'{batch["input_features"][0].shape = }')
-
     # compute input length of audio sample in seconds than used to filter out samples longer than 30 seconds
     batch["input_length"] = [
         len(audio["array"]) / audio["sampling_rate"] for audio in audio_list
     ]
-    logging.info(f'{batch["input_length"] = }')
     # optional pre-processing steps
     transcription = batch["sentence"]
     if do_lower_case:
@@ -48,11 +44,15 @@ def preprocess(
 def prepare_dataset(config: Config) -> tuple[DatasetDict, Path]:
     dataset = load_dataset(config.dataset_name, config.dataset_lang)
     logging.info(f"Dataset loaded: {dataset}")
+
+    train_sample_count = max(int(len(dataset["train"]) * config.sample_percentage), 10)
+    validation_sample_count = max(
+        int(len(dataset["validation"]) * config.sample_percentage), 10
+    )
     dataset = DatasetDict(
         {
-            "train": dataset["train"].select(range(10)),
-            "validation": dataset["validation"].select(range(10)),
-            "test": dataset["test"].select(range(10)),
+            "train": dataset["train"].select(range(train_sample_count)),
+            "validation": dataset["validation"].select(range(validation_sample_count)),
         }
     )
 
@@ -72,6 +72,7 @@ def prepare_dataset(config: Config) -> tuple[DatasetDict, Path]:
             next(iter(dataset.values())).features,
         ),
         batched=True,
+        batch_size=1024,
         fn_kwargs={
             "processor": processor,
             "do_lower_case": config.do_lower_case,
@@ -80,7 +81,10 @@ def prepare_dataset(config: Config) -> tuple[DatasetDict, Path]:
         },
     ).with_format("torch")
 
-    save_path = Path(f"data/{config.dataset_name}")
-    save_path.mkdir(parents=True, exist_ok=True)
-    vectorized_dataset.save_to_disk(save_path)
+    if config.save_to_disk:
+        save_path = Path(f"data/{config.dataset_name}")
+        save_path.mkdir(parents=True, exist_ok=True)
+        vectorized_dataset.save_to_disk(save_path)
+    else:
+        save_path = None
     return vectorized_dataset, save_path
