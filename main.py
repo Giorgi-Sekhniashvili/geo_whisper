@@ -3,7 +3,7 @@ from transformers import WhisperForConditionalGeneration, AutoProcessor
 
 
 if __name__ == "__main__":
-    audio_path = "data/Recording.m4a"
+    audio_path = "tests/data/Recording.m4a"
     model_name = "GiorgiSekhniashvili/whisper-tiny-ka"
 
     processor = AutoProcessor.from_pretrained(model_name)
