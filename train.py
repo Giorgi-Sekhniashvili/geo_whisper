@@ -27,7 +27,7 @@ def train():
         dataset, _ = prepare_dataset(config)
     else:
         dataset = load_dataset(config.dataset_name, config.dataset_lang)
-    print("Training model...")
+    logging.info("Training model...")
 
     model = WhisperForConditionalGeneration.from_pretrained(config.model_name)
     processor = WhisperProcessor.from_pretrained(

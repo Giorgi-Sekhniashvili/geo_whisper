@@ -53,6 +53,7 @@ def prepare_dataset(config: Config) -> tuple[DatasetDict, Path]:
         {
             "train": dataset["train"].select(range(train_sample_count)),
             "validation": dataset["validation"].select(range(validation_sample_count)),
+            "test": dataset["test"],
         }
     )
 
